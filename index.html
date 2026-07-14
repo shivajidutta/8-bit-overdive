@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>8-Bit Overdrive</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="touchControls">
+  <div class="touchGroup touchGroup--steer">
+    <button id="btnLeft" class="touchBtn" aria-label="Steer left">◀</button>
+    <button id="btnRight" class="touchBtn" aria-label="Steer right">▶</button>
+  </div>
+  <div class="touchGroup touchGroup--speed">
+    <button id="btnOk" class="touchBtn touchBtn--ok" aria-label="Select / return to car selection">OK</button>
+    <button id="btnUp" class="touchBtn touchBtn--accel" aria-label="Accelerate">▲</button>
+    <button id="btnDown" class="touchBtn" aria-label="Brake">▼</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

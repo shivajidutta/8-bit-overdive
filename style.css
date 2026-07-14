@@ -1,0 +1,72 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#touchControls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 16px;
+  pointer-events: none; /* only the buttons themselves are clickable */
+  z-index: 10;
+}
+
+.touchGroup {
+  display: flex;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.touchGroup--speed {
+  flex-direction: column;
+  align-items: center;
+}
+
+.touchBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.touchBtn:active,
+.touchBtn.touchActive {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.touchBtn--accel {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #fff;
+}
+
+.touchBtn--ok {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}

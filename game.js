@@ -785,17 +785,24 @@ function drawFrontCar(cx, cy, w, h) {
   ctx.restore();
 }
 
+// scales HUD text/bar sizing up a bit on small phone screens, down a bit on
+// huge desktop monitors, so it reads reasonably at any device size
+function uiScale() {
+  return Math.max(0.85, Math.min(1.35, canvas.width / 480));
+}
+
 function drawHUD() {
+  const s = uiScale();
   ctx.fillStyle = '#ddd';
-  ctx.font = '16px monospace';
+  ctx.font = `${Math.round(16 * s)}px monospace`;
   ctx.textAlign = 'left';
 
   const t = elapsed.toFixed(2);
-  ctx.fillText(`TIME: ${t}s`, 16, 26);
-  ctx.fillText(`BEST: ${bestTime !== null ? bestTime.toFixed(2) + 's' : '--'}`, 16, 48);
+  ctx.fillText(`TIME: ${t}s`, 16 * s, 26 * s);
+  ctx.fillText(`BEST: ${bestTime !== null ? bestTime.toFixed(2) + 's' : '--'}`, 16 * s, 48 * s);
 
   if (player) {
-    const barX = 16, barY = 70, barW = 160, barH = 14;
+    const barX = 16 * s, barY = 70 * s, barW = 160 * s, barH = 14 * s;
     ctx.strokeStyle = '#ccc';
     ctx.strokeRect(barX, barY, barW, barH);
     const pct = Math.max(0, Math.min(1, (player.speed - player.def.minSpeed) / (player.def.maxSpeed - player.def.minSpeed)));
@@ -805,14 +812,14 @@ function drawHUD() {
     ctx.fillStyle = barColor;
     ctx.fillRect(barX, barY, barW * pct, barH);
     ctx.fillStyle = '#ddd';
-    ctx.fillText(`SPEED ${Math.round(player.speed)}`, barX, barY + barH + 16);
+    ctx.fillText(`SPEED ${Math.round(player.speed)}`, barX, barY + barH + 16 * s);
 
     if (player.def.lives > 1) {
-      ctx.fillText(`LIVES: ${player.lives}`, barX, barY + barH + 38);
+      ctx.fillText(`LIVES: ${player.lives}`, barX, barY + barH + 38 * s);
     }
 
     ctx.textAlign = 'right';
-    ctx.fillText(`${player.def.name}`, canvas.width - 16, 26);
+    ctx.fillText(`${player.def.name}`, canvas.width - 16 * s, 26 * s);
     ctx.textAlign = 'left';
   }
 }

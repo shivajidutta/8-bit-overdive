@@ -21,14 +21,17 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 16px;
+  /* respects notches/home-bar on phones, plus scales with screen size */
+  padding: max(env(safe-area-inset-bottom, 0px), clamp(10px, 3.5vw, 20px));
+  padding-left: clamp(10px, 3.5vw, 20px);
+  padding-right: clamp(10px, 3.5vw, 20px);
   pointer-events: none; /* only the buttons themselves are clickable */
   z-index: 10;
 }
 
 .touchGroup {
   display: flex;
-  gap: 14px;
+  gap: clamp(10px, 3.5vw, 18px);
   pointer-events: auto;
 }
 
@@ -38,13 +41,14 @@ canvas {
 }
 
 .touchBtn {
-  width: 64px;
-  height: 64px;
+  /* scales up on small/touch screens instead of staying a fixed, too-small size */
+  width: clamp(64px, 20vw, 96px);
+  height: clamp(64px, 20vw, 96px);
   border-radius: 50%;
   border: 2px solid #fff;
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
-  font-size: 26px;
+  font-size: clamp(24px, 8vw, 38px);
   line-height: 1;
   display: flex;
   align-items: center;
@@ -52,6 +56,7 @@ canvas {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; /* removes the grey "flash" that reads as lag */
   touch-action: none;
 }
 
@@ -66,7 +71,7 @@ canvas {
 }
 
 .touchBtn--ok {
-  font-size: 16px;
+  font-size: clamp(14px, 5vw, 20px);
   font-weight: bold;
   letter-spacing: 1px;
 }

@@ -11,6 +11,18 @@ window.addEventListener('resize', resize);
 window.addEventListener('load', resize);
 resize();
 
+// real on-screen height of the touch control bar (0 if not present), so the
+// game's own layout can leave room for it instead of drawing underneath it —
+// this is what was breaking landscape, where the bar eats a big chunk of a
+// short viewport
+function touchControlsHeight() {
+  const el = document.getElementById('touchControls');
+  if (!el) return 0;
+  const style = getComputedStyle(el);
+  if (style.display === 'none') return 0;
+  return el.getBoundingClientRect().height || 0;
+}
+
 // ---------- Constants ----------
 
 const BASE_SPEED = 220;          // px/s auto-drive cruise speed
@@ -838,14 +850,21 @@ function drawTitle() {
     ctx.stroke();
   }
 
-  // big head-on hero car, front and center
-  const carW = Math.min(220, canvas.width * 0.32);
+  // reserve real room for the touch control bar so the prompt/footer never
+  // sit underneath it — this is what was breaking landscape
+  const reserveBottom = Math.max(50, touchControlsHeight() + 14);
+  const availableH = canvas.height - reserveBottom;
+
+  // sized off the SMALLER of width/height so a short landscape screen
+  // doesn't get a hero car too big to fit, or text pushed off-screen
+  const carW = Math.min(220, canvas.width * 0.32, availableH * 0.42);
   const carH = carW * 0.9;
-  drawFrontCar(canvas.width / 2, canvas.height * 0.42, carW, carH);
+  const carCenterY = Math.min(canvas.height * 0.42, availableH * 0.48);
+  drawFrontCar(canvas.width / 2, carCenterY, carW, carH);
 
   ctx.textAlign = 'center';
-  const titleY = canvas.height * 0.42 - carH * 0.75;
-  const titleSize = Math.min(52, canvas.width * 0.085);
+  const titleY = Math.max(carH * 0.5 + 10, carCenterY - carH * 0.75);
+  const titleSize = Math.min(52, canvas.width * 0.085, availableH * 0.13);
   ctx.font = `bold ${titleSize}px monospace`;
   ctx.fillStyle = '#7e1015'; // drop shadow for a bit of arcade-marquee punch
   ctx.fillText(GAME_TITLE, canvas.width / 2 + 3, titleY + 3);
@@ -860,12 +879,12 @@ function drawTitle() {
   if (blinkOn) {
     ctx.fillStyle = '#ddd';
     ctx.font = '16px monospace';
-    ctx.fillText('PRESS ENTER OR OK TO START', canvas.width / 2, canvas.height * 0.82);
+    ctx.fillText('PRESS ENTER OR OK TO START', canvas.width / 2, canvas.height - reserveBottom + 20);
   }
 
   ctx.fillStyle = '#666';
   ctx.font = '12px monospace';
-  ctx.fillText('made for Arnay', canvas.width / 2, canvas.height - 24);
+  ctx.fillText('made for Arnay', canvas.width / 2, canvas.height - reserveBottom + 38);
 }
 
 function drawSelect() {
@@ -873,40 +892,64 @@ function drawSelect() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = '#ddd';
-  ctx.font = '28px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('SELECT YOUR CAR', canvas.width / 2, 70);
-  ctx.font = '14px monospace';
-  ctx.fillText('<- -> to choose   ENTER to race', canvas.width / 2, 96);
+  const headerSize = Math.max(16, Math.min(28, canvas.width * 0.055));
+  ctx.font = `${Math.round(headerSize)}px monospace`;
+  ctx.fillText('SELECT YOUR CAR', canvas.width / 2, headerSize + 16);
+  const subSize = Math.max(10, Math.min(14, canvas.width * 0.03));
+  ctx.font = `${Math.round(subSize)}px monospace`;
+  ctx.fillText('<- -> to choose   ENTER to race', canvas.width / 2, headerSize + subSize + 24);
+  const headerBottom = headerSize + subSize + 34;
 
-  const carW = 56, carH = 104;
-  const spacing = Math.max(carW + 90, Math.min(200, canvas.width / (CARS.length + 0.6)));
-  const startX = canvas.width / 2 - spacing * (CARS.length - 1) / 2;
-  const y = canvas.height / 2;
+  // leave real room for the touch control bar (and a little breathing room
+  // for the two footer text lines) — this is what keeps landscape sane
+  const footerH = 46;
+  const reserveBottom = Math.max(footerH, touchControlsHeight() + 12);
+  const availableH = Math.max(70, canvas.height - headerBottom - reserveBottom);
+  const availableW = Math.max(120, canvas.width - 24);
+
+  // fall back to 2 rows once a single row would squeeze each car below a
+  // sane minimum width — this is what fixes "can't see the 5 cars" on phones
+  const minCarW = 30;
+  const fitsOneRow = availableW / CARS.length >= minCarW + 36;
+  const columns = fitsOneRow ? CARS.length : Math.ceil(CARS.length / 2);
+  const rows = Math.ceil(CARS.length / columns);
+
+  const spacingX = availableW / columns;
+  const rowH = availableH / rows;
+  const carW = Math.max(minCarW, Math.min(56, spacingX * 0.5, rowH * 0.33));
+  const carH = carW * 1.857;
+  const rowSpacingY = Math.min(rowH, carH + 54);
+  const gridStartY = headerBottom + (availableH - rowSpacingY * rows) / 2 + rowSpacingY / 2;
 
   CARS.forEach((car, i) => {
-    const x = startX + i * spacing;
+    const row = Math.floor(i / columns);
+    const itemsInRow = Math.min(columns, CARS.length - row * columns);
+    const rowStartX = canvas.width / 2 - spacingX * (itemsInRow - 1) / 2;
+    const x = rowStartX + (i % columns) * spacingX;
+    const y = gridStartY + row * rowSpacingY;
+
     const isSelected = i === selectedIndex;
     // every car gets its own visible box so none of them disappear into the
     // background — the selected one just gets a brighter, thicker outline
     ctx.strokeStyle = isSelected ? '#c9b93a' : 'rgba(255,255,255,0.25)';
     ctx.lineWidth = isSelected ? 3 : 1.5;
-    ctx.strokeRect(x - carW / 2 - 10, y - carH / 2 - 14, carW + 20, carH + 28);
+    ctx.strokeRect(x - carW / 2 - 8, y - carH / 2 - 10, carW + 16, carH + 20);
     drawCar(x, y, carW, carH, car.color, car.accent, car.shape);
     ctx.fillStyle = isSelected ? '#c9b93a' : '#888';
-    ctx.font = '12px monospace';
-    ctx.fillText(car.name, x, y + carH / 2 + 26);
+    ctx.font = `${Math.max(9, Math.round(carW * 0.2))}px monospace`;
+    ctx.fillText(car.name, x, y + carH / 2 + Math.max(13, carW * 0.28));
   });
 
   const car = CARS[selectedIndex];
+  const footerY = canvas.height - reserveBottom;
   ctx.fillStyle = '#ccc';
-  ctx.font = '13px monospace';
+  ctx.font = `${Math.round(subSize)}px monospace`;
   const info = car.id === 'cybertruck'
     ? `Top speed: ${Math.round(car.maxSpeed)}   Survives 2 hits`
     : `Top speed: ${Math.round(car.maxSpeed)}   One touch = game over`;
-  ctx.fillText(info, canvas.width / 2, canvas.height - 40);
-
-  ctx.fillText(bestTime !== null ? `Best time ever: ${bestTime.toFixed(2)}s` : 'No best time yet', canvas.width / 2, canvas.height - 20);
+  ctx.fillText(info, canvas.width / 2, footerY + 20);
+  ctx.fillText(bestTime !== null ? `Best time ever: ${bestTime.toFixed(2)}s` : 'No best time yet', canvas.width / 2, footerY + 36);
 }
 
 function drawOverlayMessage(lines) {
@@ -941,8 +984,12 @@ function draw() {
 
   if (player) {
     const { w, h } = carDimsFor();
+    // keep the player above the touch control bar instead of drawing
+    // underneath it — matters most in landscape, where the bar eats a much
+    // bigger share of a short viewport
+    const playerY = Math.min(canvas.height * 0.8, canvas.height - touchControlsHeight() - h * 0.7);
     for (const car of traffic) {
-      const y = canvas.height * 0.8 - (car.s - player.s);
+      const y = playerY - (car.s - player.s);
       if (y < -h || y > canvas.height + h) continue;
       const indicatorDir = car.blinkTimer > 0 ? car.blinkDir : (Math.abs(car.vx) > 15 ? Math.sign(car.vx) : 0);
       drawCar(car.x, y, w, h, car.color, '#222', car.shape, indicatorDir);
@@ -950,7 +997,7 @@ function draw() {
     const flashHidden = player.invuln > 0 && Math.floor(elapsed * 10) % 2 === 0;
     if (!flashHidden) {
       const playerIndicatorDir = Math.abs(player.vx) > 15 ? Math.sign(player.vx) : 0;
-      drawCar(player.x, canvas.height * 0.8, w, h, player.def.color, player.def.accent, player.def.shape, playerIndicatorDir);
+      drawCar(player.x, playerY, w, h, player.def.color, player.def.accent, player.def.shape, playerIndicatorDir);
     }
   }
 

@@ -21,17 +21,18 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  /* respects notches/home-bar on phones, plus scales with screen size */
-  padding: max(env(safe-area-inset-bottom, 0px), clamp(10px, 3.5vw, 20px));
-  padding-left: clamp(10px, 3.5vw, 20px);
-  padding-right: clamp(10px, 3.5vw, 20px);
+  /* vmin (not vw) so this scales sanely in landscape too — vw alone blows up
+     once the "wide" dimension is the one that's no longer the short side */
+  padding: max(env(safe-area-inset-bottom, 0px), clamp(6px, 2.2vmin, 14px));
+  padding-left: clamp(6px, 2.2vmin, 14px);
+  padding-right: clamp(6px, 2.2vmin, 14px);
   pointer-events: none; /* only the buttons themselves are clickable */
   z-index: 10;
 }
 
 .touchGroup {
   display: flex;
-  gap: clamp(10px, 3.5vw, 18px);
+  gap: clamp(6px, 2.2vmin, 12px);
   pointer-events: auto;
 }
 
@@ -41,14 +42,15 @@ canvas {
 }
 
 .touchBtn {
-  /* scales up on small/touch screens instead of staying a fixed, too-small size */
-  width: clamp(64px, 20vw, 96px);
-  height: clamp(64px, 20vw, 96px);
+  /* sized off vmin so phones get a sensible size in both portrait and
+     landscape, instead of ballooning whenever the screen is wide */
+  width: clamp(42px, 12vmin, 66px);
+  height: clamp(42px, 12vmin, 66px);
   border-radius: 50%;
   border: 2px solid #fff;
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
-  font-size: clamp(24px, 8vw, 38px);
+  font-size: clamp(16px, 5vmin, 26px);
   line-height: 1;
   display: flex;
   align-items: center;
@@ -71,7 +73,7 @@ canvas {
 }
 
 .touchBtn--ok {
-  font-size: clamp(14px, 5vw, 20px);
+  font-size: clamp(10px, 3.2vmin, 15px);
   font-weight: bold;
   letter-spacing: 1px;
 }
